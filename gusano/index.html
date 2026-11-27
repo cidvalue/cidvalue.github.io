@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#14401f">
+<title>Gusano</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐛</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#fdfdf5;
+    --deep:#0e2f18;
+    --gold:#ffd54a;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    font-family:'Nunito',system-ui,sans-serif;
+    background:#14401f;
+    color:var(--ink);
+    touch-action:none;
+    overscroll-behavior:none;
+    -webkit-user-select:none;user-select:none;
+    position:fixed;inset:0;
+  }
+  #app{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 8px) 10px calc(env(safe-area-inset-bottom) + 8px);}
+  /* ---------- HUD ---------- */
+  #hud{width:100%;max-width:520px;display:flex;align-items:stretch;gap:8px;z-index:5}
+  .hud-card{
+    flex:1;background:rgba(10,35,18,.55);border:1px solid rgba(255,255,255,.14);
+    border-radius:14px;padding:6px 10px;backdrop-filter:blur(6px);
+    box-shadow:0 4px 14px rgba(0,0,0,.25);
+  }
+  .hud-card .label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.75;font-weight:800}
+  .hud-card .value{font-family:'Baloo 2',cursive;font-size:21px;font-weight:800;line-height:1.05}
+  #hudButterflies .value{color:#ffc4e1}
+  #hudLevel .value{font-size:15px;line-height:1.25}
+  .icon-btn{
+    width:44px;border-radius:14px;border:1px solid rgba(255,255,255,.14);
+    background:rgba(10,35,18,.55);color:var(--ink);font-size:19px;cursor:pointer;
+    backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(0,0,0,.25);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .icon-btn:active{transform:scale(.93)}
+  /* ---------- Stage ---------- */
+  #stage{position:relative;flex:1;width:100%;max-width:520px;display:flex;justify-content:center;align-items:flex-start;margin-top:8px;min-height:0}
+  #boardWrap{position:relative;border-radius:18px;overflow:hidden;
+    box-shadow:0 18px 50px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.10), inset 0 0 60px rgba(0,0,0,.25)}
+  canvas#game{display:block}
+  /* side panel (next + meter) */
+  #side{position:absolute;top:0;display:flex;flex-direction:column;gap:10px;width:86px}
+  .panel{
+    background:rgba(10,35,18,.55);border:1px solid rgba(255,255,255,.14);border-radius:14px;
+    padding:8px;backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(0,0,0,.25);text-align:center;
+  }
+  .panel .label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.75;font-weight:800;margin-bottom:4px}
+  canvas#nextCv{display:block;margin:0 auto}
+  #meterTrack{height:12px;border-radius:99px;background:rgba(255,255,255,.15);overflow:hidden;margin-top:2px}
+  #meterFill{height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,#8be04e,#ffd54a);transition:width .35s ease}
+  #meterLeaf{font-size:17px}
+  /* touch buttons */
+  .touch-btn{
+    position:absolute;bottom:14px;width:64px;height:64px;border-radius:50%;
+    border:1px solid rgba(255,255,255,.25);background:rgba(10,35,18,.5);color:#fff;
+    font-size:27px;display:flex;align-items:center;justify-content:center;z-index:6;
+    backdrop-filter:blur(4px);box-shadow:0 8px 22px rgba(0,0,0,.35);cursor:pointer;
+  }
+  .touch-btn:active{transform:scale(.92);background:rgba(30,80,40,.65)}
+  #btnRotate{right:12px}
+  #btnDrop{left:12px}
+  /* ---------- Banners ---------- */
+  .banner{
+    position:absolute;left:50%;top:34%;transform:translate(-50%,-50%) scale(.8);
+    font-family:'Baloo 2',cursive;font-weight:800;text-align:center;pointer-events:none;
+    opacity:0;z-index:8;text-shadow:0 4px 24px rgba(0,0,0,.5);white-space:nowrap;
+  }
+  .banner.show{animation:bannerPop 1.8s cubic-bezier(.2,1.4,.3,1) forwards}
+  #levelBanner{font-size:34px;color:#fff}
+  #levelBanner small{display:block;font-size:15px;font-family:'Nunito';font-weight:800;letter-spacing:.22em;text-transform:uppercase;opacity:.9}
+  #finaleBanner{font-size:44px;color:var(--gold)}
+  @keyframes bannerPop{
+    0%{opacity:0;transform:translate(-50%,-50%) scale(.7)}
+    14%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}
+    22%{transform:translate(-50%,-50%) scale(1)}
+    80%{opacity:1}
+    100%{opacity:0;transform:translate(-50%,-58%) scale(1)}
+  }
+  /* ---------- Overlays ---------- */
+  .overlay{
+    position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse at 50% 35%, rgba(20,64,31,.25), rgba(6,24,12,.78) 75%);
+    backdrop-filter:blur(3px);text-align:center;padding:24px;transition:opacity .4s ease;
+  }
+  .overlay.hidden{opacity:0;pointer-events:none}
+  .logo-worm{font-size:64px;animation:bob 2.6s ease-in-out infinite;filter:drop-shadow(0 10px 18px rgba(0,0,0,.4))}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-9px) rotate(3deg)}}
+  h1.title{
+    font-family:'Baloo 2',cursive;font-size:min(19vw,84px);font-weight:800;line-height:.95;letter-spacing:.01em;
+    background:linear-gradient(180deg,#eaffb0 15%,#8be04e 55%,#43a047 90%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 5px 0 rgba(10,40,16,.55)) drop-shadow(0 14px 28px rgba(0,0,0,.35));
+  }
+  .tagline{font-family:'Baloo 2',cursive;font-size:19px;font-weight:700;color:#ffe9a8;margin-top:2px}
+  .dedication{
+    margin-top:20px;font-size:16.5px;line-height:1.5;font-weight:700;color:#fff;max-width:340px;
+    background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);border-radius:16px;padding:12px 18px;
+  }
+  .dedication .butterfly{font-size:21px}
+  .big-btn{
+    margin-top:26px;font-family:'Baloo 2',cursive;font-size:24px;font-weight:800;color:#173d10;
+    background:linear-gradient(180deg,#c6f16d,#7ed321);border:none;border-radius:99px;padding:14px 52px;cursor:pointer;
+    box-shadow:0 8px 0 #4c8a12, 0 18px 34px rgba(0,0,0,.4);transition:transform .08s, box-shadow .08s;
+  }
+  .big-btn:active{transform:translateY(5px);box-shadow:0 3px 0 #4c8a12, 0 10px 20px rgba(0,0,0,.4)}
+  .howto{margin-top:22px;font-size:13.5px;font-weight:700;color:rgba(255,255,255,.82);line-height:1.65;max-width:330px}
+  .stat-row{display:flex;gap:10px;margin-top:18px}
+  .stat-chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:8px 16px}
+  .stat-chip .n{font-family:'Baloo 2';font-size:23px;font-weight:800}
+  .stat-chip .t{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.8;font-weight:800}
+  #overTitle{font-family:'Baloo 2',cursive;font-size:44px;font-weight:800;color:#fff;text-shadow:0 5px 22px rgba(0,0,0,.5)}
+  #pauseScreen .dedication{margin-top:8px}
+  @media (max-height:560px){ .howto{display:none} .logo-worm{font-size:44px} }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hud">
+    <div class="hud-card"><div class="label">Puntos</div><div class="value" id="hudScore">0</div></div>
+    <div class="hud-card" id="hudButterflies"><div class="label">Mariposas</div><div class="value" id="hudFly">🦋 0</div></div>
+    <div class="hud-card" id="hudLevel"><div class="label">Nivel</div><div class="value" id="hudLevelName">Pequeña Gusano</div></div>
+    <button class="icon-btn" id="btnMute" aria-label="Sonido">🔊</button>
+    <button class="icon-btn" id="btnPause" aria-label="Pausa">⏸</button>
+  </div>
+
+  <div id="stage">
+    <div id="boardWrap">
+      <canvas id="game"></canvas>
+      <div class="banner" id="levelBanner"></div>
+      <div class="banner" id="finaleBanner">¡MARIPOSA! 🦋</div>
+    </div>
+    <div id="side">
+      <div class="panel"><div class="label">Sigue</div><canvas id="nextCv" width="72" height="72"></canvas></div>
+      <div class="panel"><div class="label">Crisálida</div><div id="meterLeaf">🍃</div><div id="meterTrack"><div id="meterFill"></div></div></div>
+    </div>
+    <button class="touch-btn" id="btnDrop" aria-label="Soltar">⬇</button>
+    <button class="touch-btn" id="btnRotate" aria-label="Girar">⟳</button>
+  </div>
+</div>
+
+<div class="overlay" id="startScreen">
+  <div class="logo-worm">🐛</div>
+  <h1 class="title">GUSANO</h1>
+  <div class="tagline">De gusano… ¡a mariposa! 🦋</div>
+  <div class="dedication">Para Sofia, mi Gusano —<br>que ya es <span class="butterfly">🦋</span> Mariposa.<br>— Papá</div>
+  <button class="big-btn" id="btnPlay">¡A jugar!</button>
+  <div class="stat-row">
+    <div class="stat-chip"><div class="n" id="statBest">0</div><div class="t">Récord</div></div>
+    <div class="stat-chip"><div class="n" id="statJardin">🦋 0</div><div class="t">Jardín de Sofia</div></div>
+  </div>
+  <div class="howto">Desliza para mover al gusano · Toca para girarlo<br>Desliza hacia abajo para soltarlo<br>Completa filas y libera mariposas 🦋</div>
+</div>
+
+<div class="overlay hidden" id="overScreen">
+  <div class="logo-worm">🦋</div>
+  <div id="overTitle">El jardín descansa</div>
+  <div class="stat-row">
+    <div class="stat-chip"><div class="n" id="overScore">0</div><div class="t">Puntos</div></div>
+    <div class="stat-chip"><div class="n" id="overFly">0</div><div class="t">Mariposas</div></div>
+    <div class="stat-chip"><div class="n" id="overLines">0</div><div class="t">Filas</div></div>
+  </div>
+  <button class="big-btn" id="btnAgain">Otra vez</button>
+  <div class="howto" id="overJardin"></div>
+</div>
+
+<div class="overlay hidden" id="pauseScreen">
+  <div class="logo-worm">🍃</div>
+  <div id="overTitle">Pausa</div>
+  <div class="dedication">El gusano está descansando…</div>
+  <button class="big-btn" id="btnResume">Seguir</button>
+</div>
+
+<script>
+'use strict';
+/* ============================================================
+   GUSANO — de gusano a mariposa
+   ============================================================ */
+const COLS = 10, ROWS = 20;
+const $ = id => document.getElementById(id);
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const rand = n => Math.floor(Math.random()*n);
+
+/* ---------------- Audio (WebAudio, todo sintetizado) ---------------- */
+const AudioSys = {
+  ctx:null, master:null, musicGain:null, muted: localStorage.getItem('gusano_muted')==='1',
+  musicTimer:null, chordIdx:0, nextNoteTime:0,
+  init(){
+    if(this.ctx) return;
+    try{
+      this.ctx = new (window.AudioContext||window.webkitAudioContext)();
+      this.master = this.ctx.createGain(); this.master.gain.value = this.muted?0:1;
+      this.master.connect(this.ctx.destination);
+      this.musicGain = this.ctx.createGain(); this.musicGain.gain.value = 0.5;
+      this.musicGain.connect(this.master);
+    }catch(e){ this.ctx=null; }
+  },
+  resume(){ if(this.ctx && this.ctx.state==='suspended') this.ctx.resume(); },
+  setMuted(m){ this.muted=m; localStorage.setItem('gusano_muted', m?'1':'0');
+    if(this.master) this.master.gain.value = m?0:1; },
+  tone(freq, t0, dur, type, vol, dest, glideTo){
+    if(!this.ctx) return;
+    const o=this.ctx.createOscillator(), g=this.ctx.createGain();
+    o.type=type; o.frequency.setValueAtTime(freq,t0);
+    if(glideTo) o.frequency.exponentialRampToValueAtTime(glideTo, t0+dur);
+    g.gain.setValueAtTime(0,t0);
+    g.gain.linearRampToValueAtTime(vol, t0+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0008, t0+dur);
+    o.connect(g); g.connect(dest||this.master);
+    o.start(t0); o.stop(t0+dur+0.05);
+  },
+  pluck(freq, t0, vol){
+    this.tone(freq, t0, 0.9, 'sine', vol||0.16, this.musicGain);
+    this.tone(freq*2, t0, 0.35, 'sine', (vol||0.16)*0.35, this.musicGain);
+    this.tone(freq*3, t0, 0.12, 'sine', (vol||0.16)*0.12, this.musicGain);
+  },
+  pad(freqs, t0, dur){
+    if(!this.ctx) return;
+    freqs.forEach(f=>{
+      const o=this.ctx.createOscillator(), g=this.ctx.createGain(), fl=this.ctx.createBiquadFilter();
+      o.type='triangle'; o.frequency.value=f;
+      fl.type='lowpass'; fl.frequency.value=900;
+      g.gain.setValueAtTime(0,t0);
+      g.gain.linearRampToValueAtTime(0.045, t0+dur*0.3);
+      g.gain.linearRampToValueAtTime(0.0008, t0+dur);
+      o.connect(fl); fl.connect(g); g.connect(this.musicGain);
+      o.start(t0); o.stop(t0+dur+0.05);
+    });
+  },
+  startMusic(){
+    if(!this.ctx || this.musicTimer) return;
+    const chords=[ [261.6,329.6,392.0], [196.0,246.9,392.0], [220.0,261.6,329.6], [174.6,261.6,349.2] ];
+    const penta=[523.3,587.3,659.3,784.0,880.0,1046.5];
+    this.nextNoteTime = this.ctx.currentTime + 0.1;
+    this.pad(chords[0], this.nextNoteTime, 4.4);
+    this.musicTimer = setInterval(()=>{
+      if(!this.ctx || this.muted) return;
+      const now=this.ctx.currentTime;
+      while(this.nextNoteTime < now + 0.6){
+        if(Math.random()<0.72) this.pluck(penta[rand(penta.length)], this.nextNoteTime, 0.10+Math.random()*0.07);
+        this.nextNoteTime += 0.42 + Math.random()*0.3;
+      }
+      if(Math.random()<0.30){
+        this.chordIdx=(this.chordIdx+1)%chords.length;
+        this.pad(chords[this.chordIdx], now, 4.4);
+      }
+    }, 300);
+  },
+  sfx(name){
+    if(!this.ctx || this.muted) return;
+    const t=this.ctx.currentTime;
+    switch(name){
+      case 'move': this.tone(340+Math.random()*40, t, 0.05, 'sine', 0.05); break;
+      case 'rotate': this.tone(520, t, 0.09, 'sine', 0.09, null, 760); break;
+      case 'lock': this.tone(140, t, 0.12, 'triangle', 0.22, null, 70); break;
+      case 'soft': this.tone(220, t, 0.04, 'sine', 0.04); break;
+      case 'clear': [659.3,784.0,1046.5].forEach((f,i)=>this.tone(f, t+i*0.07, 0.5, 'sine', 0.14)); break;
+      case 'hatch': [523.3,659.3,784.0,1046.5,1318.5].forEach((f,i)=>this.tone(f, t+i*0.06, 0.6, 'sine', 0.13)); break;
+      case 'gold': [784.0,988.0,1175.0,1568.0].forEach((f,i)=>this.tone(f, t+i*0.08, 0.7, 'triangle', 0.12)); break;
+      case 'level': [523.3,659.3,784.0].forEach((f,i)=>this.tone(f, t+i*0.09, 0.5, 'triangle', 0.13)); break;
+      case 'over': [392.0,329.6,261.6,196.0].forEach((f,i)=>this.tone(f, t+i*0.16, 0.5, 'sine', 0.12)); break;
+    }
+  }
+};
+/* ---------------- Piezas (gusanos) ---------------- */
+/* Cada pieza: celdas dentro de una caja n×n, con cabeza (cara) y cola. */
+const SHAPES = [
+  { n:4, cells:[[0,1],[1,1],[2,1],[3,1]], head:[0,1], tail:[3,1], col:0 }, // I
+  { n:3, cells:[[0,0],[0,1],[1,1],[2,1]], head:[0,0], tail:[2,1], col:1 }, // J
+  { n:3, cells:[[2,0],[0,1],[1,1],[2,1]], head:[2,0], tail:[0,1], col:2 }, // L
+  { n:2, cells:[[0,0],[1,0],[0,1],[1,1]], head:[0,0], tail:[1,1], col:3 }, // O
+  { n:3, cells:[[1,0],[2,0],[0,1],[1,1]], head:[2,0], tail:[0,1], col:4 }, // S
+  { n:3, cells:[[1,0],[0,1],[1,1],[2,1]], head:[1,0], tail:[2,1], col:5 }, // T
+  { n:3, cells:[[0,0],[1,0],[1,1],[2,1]], head:[0,0], tail:[2,1], col:6 }, // Z
+];
+const COLORS = [
+  { a:'#7dd8f8', b:'#29a9e0', dark:'#15719e' },  // cielo
+  { a:'#a5b8f3', b:'#6d83e0', dark:'#45549c' },  // lavanda
+  { a:'#ffc46b', b:'#f59d2e', dark:'#b06f14' },  // naranja
+  { a:'#ffe97a', b:'#f2cf2e', dark:'#a8890f' },  // sol
+  { a:'#9fe870', b:'#58b531', dark:'#35751a' },  // hoja
+  { a:'#e3a6f0', b:'#b45fd0', dark:'#7d3499' },  // flor
+  { a:'#ff9d9d', b:'#ef6461', dark:'#b03a38' },  // pétalo
+];
+const GOLD = { a:'#ffe97a', b:'#ffb300', dark:'#b97e00' };
+const LEVEL_NAMES = ['Pequeña Gusano','Gusano Crece','Gusano Explora','Gusano Sueña','La Crisálida','Primeras Alas','¡Mariposa!','Mariposa Libre'];
+const SPEEDS = [800,720,640,560,480,420,360,300,250,210,180,150,125,105,90,75,62,52,44,37];
+const SKIES = [
+  ['#8ec9eb','#cfeeff','#fdf6d8'], ['#86c5ec','#c8ecff','#fdf3d0'], ['#7fbdf0','#c2e6ff','#fdeec4'],
+  ['#79b2ec','#bcdfff','#fde7bd'], ['#8fa8e8','#cdd6ff','#fbe3b3'], ['#c99bd8','#f3ccf0','#fbd9a8'],
+  ['#e89a7a','#ffc98f','#ffe3ae'], ['#e8877a','#ffb98f','#ffe0a3'],
+];
+const speedFor = lv => SPEEDS[Math.min(lv-1, SPEEDS.length-1)];
+const levelName = lv => LEVEL_NAMES[Math.min(lv-1, LEVEL_NAMES.length-1)];
+
+/* ---------------- Estado ---------------- */
+let grid, cur, nextType, bag = [];
+let score = 0, best = +(localStorage.getItem('gusano_best')||0);
+let jardin = +(localStorage.getItem('gusano_jardin')||0);
+let lines = 0, level = 1, flies = 0, combo = -1, meter = 0, piecesThisLevel = 0, pidSeq = 0;
+let state = 'menu'; // menu | play | clearing | over | pause
+let dropAcc = 0, lockTimer = 0, lockResets = 0, softDrop = false;
+let clearAnim = null, finaleAnim = null;
+let butterflies = [], particles = [], popups = [];
+let lastMoveDir = 0, blinkT = Math.random()*3000, timeMs = 0;
+let pausedFrom = null;
+
+function emptyGrid(){ return Array.from({length:ROWS}, ()=>Array(COLS).fill(null)); }
+function drawFromBag(){
+  if(bag.length===0){ bag=[0,1,2,3,4,5,6]; for(let i=6;i>0;i--){ const j=rand(i+1); [bag[i],bag[j]]=[bag[j],bag[i]]; } }
+  return bag.pop();
+}
+function makePiece(type){
+  const s = SHAPES[type];
+  piecesThisLevel++;
+  return {
+    type, n:s.n,
+    cells: s.cells.map(c=>c.slice()),
+    head: s.head.slice(), tail: s.tail.slice(),
+    x: Math.floor((COLS - s.n)/2), y: s.n===4 ? -1 : 0,
+    pid: ++pidSeq, gold: piecesThisLevel===6, rot:0,
+  };
+}
+function collides(cells, px, py){
+  for(const [cx,cy] of cells){
+    const gx=px+cx, gy=py+cy;
+    if(gx<0||gx>=COLS||gy>=ROWS) return true;
+    if(gy>=0 && grid[gy][gx]) return true;
+  }
+  return false;
+}
+function spawn(){
+  cur = makePiece(nextType);
+  nextType = drawFromBag();
+  drawNext();
+  dropAcc = 0; lockTimer = 0; lockResets = 0;
+  if(collides(cur.cells, cur.x, cur.y)){ gameOver(); }
+}
+function rotate(pt, n){ return [n-1-pt[1], pt[0]]; }
+function tryRotate(){
+  if(!cur || state!=='play') return;
+  const n=cur.n;
+  const nc = cur.cells.map(c=>rotate(c,n));
+  const nh = rotate(cur.head,n), nt = rotate(cur.tail,n);
+  const kicks=[[0,0],[-1,0],[1,0],[-2,0],[2,0],[0,-1],[-1,-1],[1,-1]];
+  for(const [kx,ky] of kicks){
+    if(!collides(nc, cur.x+kx, cur.y+ky)){
+      cur.cells=nc; cur.head=nh; cur.tail=nt; cur.x+=kx; cur.y+=ky; cur.rot=(cur.rot+1)%4;
+      if(lockTimer>0 && lockResets<12){ lockTimer=0; lockResets++; }
+      AudioSys.sfx('rotate');
+      return;
+    }
+  }
+}
+function tryMove(dx){
+  if(!cur || state!=='play') return false;
+  if(!collides(cur.cells, cur.x+dx, cur.y)){
+    cur.x+=dx; lastMoveDir=dx;
+    if(lockTimer>0 && lockResets<12){ lockTimer=0; lockResets++; }
+    AudioSys.sfx('move');
+    return true;
+  }
+  return false;
+}
+function ghostY(){
+  let gy=cur.y;
+  while(!collides(cur.cells, cur.x, gy+1)) gy++;
+  return gy;
+}
+function hardDrop(){
+  if(!cur || state!=='play') return;
+  const gy=ghostY();
+  score += (gy-cur.y)*2;
+  cur.y=gy;
+  lockPiece();
+  updateHUD();
+}
+function lockPiece(){
+  const colr = cur.gold ? GOLD : COLORS[SHAPES[cur.type].col];
+  let becameChrysalis = false;
+  for(const [cx,cy] of cur.cells){
+    const gx=cur.x+cx, gy=cur.y+cy;
+    if(gy<0){ gameOver(); return; }
+    const isHead = (cx===cur.head[0]&&cy===cur.head[1]);
+    const isTail = (cx===cur.tail[0]&&cy===cur.tail[1]);
+    grid[gy][gx] = { col: SHAPES[cur.type].col, pid: cur.pid, head:isHead, tail:isTail, gold: cur.gold, chry:0 };
+  }
+  AudioSys.sfx('lock');
+  spawnParticlesForPiece(colr);
+  // La crisálida: con el medidor lleno, la pieza que cae se envuelve
+  if(meter>=1 && !cur.gold){
+    meter = 0;
+    for(const [cx,cy] of cur.cells){
+      const gx=cur.x+cx, gy=cur.y+cy;
+      if(gy>=0) grid[gy][gx].chry = 3;
+    }
+    becameChrysalis = true;
+  }
+  updateMeter();
+  // Cuenta regresiva de las crisálidas ya en el tablero
+  let hatchRows = [];
+  for(let y=0;y<ROWS;y++) for(let x=0;x<COLS;x++){
+    const c=grid[y][x];
+    if(c && c.chry>0 && !(becameChrysalis && c.pid===cur.pid)){
+      c.chry--;
+      if(c.chry===0) hatchRows.push(y);
+    }
+  }
+  cur = null;
+  const fullRows = [];
+  for(let y=0;y<ROWS;y++) if(grid[y].every(c=>c)) fullRows.push(y);
+  const toClear = [...new Set([...fullRows, ...hatchRows])].sort((a,b)=>a-b);
+  if(toClear.length) startClear(toClear, hatchRows.length>0);
+  else { combo = -1; spawn(); }
+}
+function startClear(rows, hatched){
+  state = 'clearing';
+  // Agrupar las celdas que se van por gusano (pid) para crear las mariposas
+  const groups = new Map();
+  let goldFinale = false;
+  for(const y of rows){
+    for(let x=0;x<COLS;x++){
+      const c=grid[y][x]; if(!c) continue;
+      if(!groups.has(c.pid)) groups.set(c.pid, { col:c.col, gold:c.gold, x:x, y:y, n:0 });
+      const g=groups.get(c.pid); g.n++;
+      if(c.gold) goldFinale = true;
+    }
+  }
+  clearAnim = { rows, t:0, dur:950, groups:[...groups.values()], goldFinale, hatched };
+  if(hatched) AudioSys.sfx('hatch'); else AudioSys.sfx('clear');
+}
+function finishClear(){
+  const { rows, groups, goldFinale, hatched } = clearAnim;
+  for(const g of groups){
+    butterflies.push(makeButterfly(g.x, g.y, g.gold ? GOLD : COLORS[g.col], g.gold));
+    flies++; jardin++;
+  }
+  localStorage.setItem('gusano_jardin', jardin);
+  if(goldFinale){
+    score += 500;
+    finaleAnim = { t:0, dur:1900 };
+    showBanner('finaleBanner');
+    AudioSys.sfx('gold');
+    popups.push({ x: COLS/2, y: 6, text:'+500', col:'#ffd54a', t:0 });
+  }
+  const n = rows.length;
+  if(n>0 && !hatched){
+    combo++;
+    score += [0,100,300,500,800][Math.min(n,4)] * level + (combo>0 ? 50*combo*level : 0);
+    if(combo>0) popups.push({ x: COLS/2, y: 3, text:'¡Combo ×'+(combo+1)+'!', col:'#ffc4e1', t:0 });
+    lines += n;
+    meter = Math.min(1, meter + n*0.25);
+    const newLevel = Math.floor(lines/10)+1;
+    if(newLevel!==level){
+      level = newLevel; piecesThisLevel = 0;
+      showLevelBanner();
+      AudioSys.sfx('level');
+    }
+  } else if(hatched){
+    popups.push({ x: COLS/2, y: 5, text:'¡Nació una mariposa!', col:'#b6ff9e', t:0 });
+  }
+  const rowSet = new Set(rows);
+  const kept = grid.filter((_,y)=>!rowSet.has(y));
+  while(kept.length<ROWS) kept.unshift(Array(COLS).fill(null));
+  grid = kept;
+  clearAnim = null;
+  state = 'play';
+  updateHUD(); updateMeter();
+  spawn();
+}
+function gameOver(){
+  state='over';
+  if(score>best){ best=score; localStorage.setItem('gusano_best', best); }
+  AudioSys.sfx('over');
+  $('overScore').textContent = score;
+  $('overFly').textContent = flies;
+  $('overLines').textContent = lines;
+  $('overJardin').textContent = 'El Jardín de Sofia ya tiene 🦋 ' + jardin + ' mariposas';
+  $('overScreen').classList.remove('hidden');
+}
+function newGame(){
+  grid = emptyGrid();
+  score=0; lines=0; level=1; flies=0; combo=-1; meter=0; piecesThisLevel=0; pidSeq=0;
+  bag=[]; butterflies=[]; particles=[]; popups=[]; clearAnim=null; finaleAnim=null;
+  nextType = drawFromBag();
+  state='play';
+  updateHUD(); updateMeter();
+  spawn();
+  showLevelBanner();
+}
+
+/* ---------------- Render ---------------- */
+const cv = $('game'), ctx = cv.getContext('2d');
+let CELL = 30, DPR = 1, W = 0, H = 0;
+const motes = Array.from({length:26}, ()=>({ x:Math.random(), y:Math.random(), r:0.8+Math.random()*1.9, s:0.2+Math.random()*0.7, ph:Math.random()*6.28 }));
+const hills = Array.from({length:9}, (_,i)=>({ x:Math.random(), s:0.7+Math.random()*0.9, ph:i*1.7 }));
+
+function resize(){
+  DPR = Math.min(window.devicePixelRatio||1, 2);
+  const stage = $('stage'), side = $('side');
+  const availH = stage.clientHeight - 4;
+  const availW = Math.min(stage.clientWidth, 520);
+  CELL = Math.max(16, Math.floor(Math.min(availH/ROWS, (availW-104)/COLS)));
+  W = CELL*COLS; H = CELL*ROWS;
+  cv.width = W*DPR; cv.height = H*DPR;
+  cv.style.width = W+'px'; cv.style.height = H+'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  if(window.innerWidth < W + 210){
+    // Pantallas estrechas (teléfono): el panel flota sobre el cielo del jardín
+    side.style.left = 'auto';
+    side.style.right = '2px';
+    side.style.width = '64px';
+    side.style.display = 'flex';
+  } else {
+    side.style.left = 'calc(50% + ' + (W/2 + 8) + 'px)';
+    side.style.right = 'auto';
+    side.style.width = '86px';
+    side.style.display = 'flex';
+  }
+}
+window.addEventListener('resize', resize);
+
+function rr(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+function drawBackground(){
+  const sky = SKIES[Math.min(level-1, SKIES.length-1)];
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0, sky[0]); g.addColorStop(0.55, sky[1]); g.addColorStop(0.8, sky[2]); g.addColorStop(1, '#7a5a34');
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  // Sol / luna suave
+  const sx=W*0.82, sy=H*0.10;
+  const sg = ctx.createRadialGradient(sx,sy,2,sx,sy,CELL*2.6);
+  sg.addColorStop(0,'rgba(255,244,190,0.95)'); sg.addColorStop(0.25,'rgba(255,238,170,0.55)'); sg.addColorStop(1,'rgba(255,238,170,0)');
+  ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(sx,sy,CELL*2.6,0,6.29); ctx.fill();
+  // Colinas de hojas (parallax suave)
+  ctx.fillStyle='rgba(46,110,52,0.35)';
+  hills.forEach((hl,i)=>{
+    const hx=((hl.x + Math.sin(timeMs*0.00004*hl.s + hl.ph)*0.01)%1.2-0.1)*W;
+    const hy=H*0.86 + (i%3)*CELL*0.5, r=CELL*(2.2+hl.s);
+    ctx.beginPath(); ctx.arc(hx,hy+r*0.72,r,Math.PI,0); ctx.fill();
+  });
+  // Tierra
+  const eg=ctx.createLinearGradient(0,H*0.93,0,H);
+  eg.addColorStop(0,'#8a6238'); eg.addColorStop(1,'#5e3f22');
+  ctx.fillStyle=eg; ctx.fillRect(0,H*0.93,W,H*0.07);
+  ctx.fillStyle='rgba(0,0,0,0.12)';
+  for(let i=0;i<14;i++){ const dx=(i*67)%W, dy=H*0.945+(i*29)%(H*0.045); ctx.beginPath(); ctx.arc(dx,dy,2.2,0,6.29); ctx.fill(); }
+  // Polen flotante
+  for(const m of motes){
+    const mx=((m.x + timeMs*0.000008*m.s)%1)*W;
+    const my=((m.y + Math.sin(timeMs*0.0006*m.s + m.ph)*0.012)%1)*H;
+    ctx.fillStyle='rgba(255,255,230,0.5)';
+    ctx.beginPath(); ctx.arc(mx,my,m.r,0,6.29); ctx.fill();
+  }
+  // Rejilla sutil
+  ctx.strokeStyle='rgba(255,255,255,0.055)'; ctx.lineWidth=1;
+  ctx.beginPath();
+  for(let x=1;x<COLS;x++){ ctx.moveTo(x*CELL+0.5,0); ctx.lineTo(x*CELL+0.5,H); }
+  for(let y=1;y<ROWS;y++){ ctx.moveTo(0,y*CELL+0.5); ctx.lineTo(W,y*CELL+0.5); }
+  ctx.stroke();
+}
+function drawSegment(cx, cy, pal, opts){
+  opts = opts||{};
+  const pad = opts.pad!==undefined?opts.pad:1.6;
+  const x=cx*CELL+pad, y=cy*CELL+pad, w=CELL-2*pad, h=CELL-2*pad;
+  const sq = opts.squash||0;
+  ctx.save();
+  ctx.translate(x+w/2, y+h/2);
+  ctx.scale(1+sq*0.10, 1-sq*0.12);
+  ctx.translate(-(x+w/2), -(y+h/2));
+  const g=ctx.createLinearGradient(x,y,x,y+h);
+  g.addColorStop(0,pal.a); g.addColorStop(0.55,pal.b); g.addColorStop(1,pal.b);
+  ctx.fillStyle=g;
+  rr(x,y,w,h,Math.min(w,h)*0.34); ctx.fill();
+  // Sombra inferior y brillo
+  ctx.fillStyle='rgba(0,0,0,0.13)';
+  rr(x+w*0.08, y+h*0.68, w*0.84, h*0.26, h*0.13); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.38)';
+  rr(x+w*0.14, y+h*0.10, w*0.5, h*0.20, h*0.10); ctx.fill();
+  if(opts.tail){
+    ctx.fillStyle=pal.dark;
+    ctx.beginPath(); ctx.arc(x+w*0.5, y+h*0.5, w*0.10, 0, 6.29); ctx.fill();
+  }
+  ctx.restore();
+}
+function drawFace(cx, cy, pal, lookDir, ghost){
+  const x=cx*CELL, y=cy*CELL, s=CELL;
+  const cxp=x+s/2, cyp=y+s/2;
+  const look=(lookDir||0)*s*0.05;
+  const blink = (timeMs % 3400) < 120;
+  ctx.save();
+  if(ghost) ctx.globalAlpha=0.5;
+  // Antenas
+  ctx.strokeStyle=pal.dark; ctx.lineWidth=Math.max(1.6,s*0.055); ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(cxp-s*0.13, y+s*0.10); ctx.quadraticCurveTo(cxp-s*0.22, y-s*0.06, cxp-s*0.28, y-s*0.05);
+  ctx.moveTo(cxp+s*0.13, y+s*0.10); ctx.quadraticCurveTo(cxp+s*0.22, y-s*0.06, cxp+s*0.28, y-s*0.05);
+  ctx.stroke();
+  ctx.fillStyle=pal.dark;
+  ctx.beginPath(); ctx.arc(cxp-s*0.28, y-s*0.05, s*0.05, 0, 6.29); ctx.fill();
+  ctx.beginPath(); ctx.arc(cxp+s*0.28, y-s*0.05, s*0.05, 0, 6.29); ctx.fill();
+  // Ojos
+  const ey=cyp-s*0.08, ex=s*0.155;
+  if(blink && !ghost){
+    ctx.strokeStyle='#263238'; ctx.lineWidth=Math.max(1.6,s*0.05);
+    ctx.beginPath();
+    ctx.moveTo(cxp-ex-s*0.07, ey); ctx.lineTo(cxp-ex+s*0.07, ey);
+    ctx.moveTo(cxp+ex-s*0.07, ey); ctx.lineTo(cxp+ex+s*0.07, ey);
+    ctx.stroke();
+  } else {
+    for(const sgn of [-1,1]){
+      ctx.fillStyle='#ffffff';
+      ctx.beginPath(); ctx.arc(cxp+sgn*ex, ey, s*0.115, 0, 6.29); ctx.fill();
+      ctx.fillStyle='#263238';
+      ctx.beginPath(); ctx.arc(cxp+sgn*ex+look, ey+s*0.015, s*0.06, 0, 6.29); ctx.fill();
+      ctx.fillStyle='#ffffff';
+      ctx.beginPath(); ctx.arc(cxp+sgn*ex+look+s*0.02, ey-s*0.015, s*0.02, 0, 6.29); ctx.fill();
+    }
+  }
+  // Sonrisa y mejillas
+  ctx.strokeStyle='#263238'; ctx.lineWidth=Math.max(1.6,s*0.05);
+  ctx.beginPath(); ctx.arc(cxp, cyp+s*0.10, s*0.13, 0.25*Math.PI, 0.75*Math.PI); ctx.stroke();
+  ctx.fillStyle='rgba(255,120,150,0.45)';
+  ctx.beginPath(); ctx.arc(cxp-s*0.27, cyp+s*0.13, s*0.07, 0, 6.29); ctx.fill();
+  ctx.beginPath(); ctx.arc(cxp+s*0.27, cyp+s*0.13, s*0.07, 0, 6.29); ctx.fill();
+  ctx.restore();
+}
+function drawChrysalis(cx, cy, pulse){
+  const x=cx*CELL, y=cy*CELL, s=CELL;
+  ctx.save();
+  ctx.translate(x+s/2, y+s/2);
+  const sc=1+Math.sin(pulse)*0.05;
+  ctx.scale(sc,sc);
+  const g=ctx.createLinearGradient(0,-s/2,0,s/2);
+  g.addColorStop(0,'#cfe8a8'); g.addColorStop(0.6,'#9ccb6b'); g.addColorStop(1,'#77a94e');
+  ctx.fillStyle=g;
+  ctx.beginPath(); ctx.ellipse(0,0,s*0.30,s*0.40,0,0,6.29); ctx.fill();
+  ctx.strokeStyle='rgba(90,130,60,0.65)'; ctx.lineWidth=1.6;
+  for(const off of [-0.16,0,0.16]){
+    ctx.beginPath(); ctx.ellipse(0,off*s, s*0.30, s*0.10, 0, 0.15*Math.PI, 0.85*Math.PI); ctx.stroke();
+  }
+  ctx.fillStyle='#6d9c48';
+  ctx.beginPath(); ctx.ellipse(s*0.08,-s*0.44,s*0.10,s*0.05,-0.5,0,6.29); ctx.fill();
+  ctx.restore();
+}
+function makeButterfly(gx, gy, pal, gold){
+  return {
+    x: gx*CELL+CELL/2, y: gy*CELL+CELL/2,
+    vx:(Math.random()-0.5)*22, vy:-(34+Math.random()*26),
+    pal, gold:!!gold, t:0, life: 2600+Math.random()*700,
+    ph: Math.random()*6.28, scale: gold?1.5:1.0, big:false,
+  };
+}
+function drawButterfly(b){
+  const flap = Math.sin(timeMs*0.028 + b.ph);
+  const w = CELL*0.62*b.scale, h = CELL*0.44*b.scale;
+  ctx.save();
+  ctx.translate(b.x, b.y);
+  ctx.globalAlpha = clamp(1.6 - b.t/b.life, 0, 1);
+  for(const sgn of [-1,1]){
+    ctx.save();
+    ctx.scale(sgn*(0.35+0.65*Math.abs(flap)), 1);
+    const g=ctx.createRadialGradient(0,0,1, w*0.7,-h*0.2, w);
+    g.addColorStop(0, b.pal.a); g.addColorStop(1, b.pal.b);
+    ctx.fillStyle=g;
+    ctx.beginPath(); ctx.ellipse(w*0.52, -h*0.22, w*0.52, h*0.52, -0.5, 0, 6.29); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(w*0.42, h*0.30, w*0.38, h*0.36, 0.5, 0, 6.29); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.5)';
+    ctx.beginPath(); ctx.arc(w*0.55, -h*0.25, w*0.10, 0, 6.29); ctx.fill();
+    ctx.restore();
+  }
+  ctx.strokeStyle='#37474f'; ctx.lineWidth=Math.max(1.6, CELL*0.07*b.scale); ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(0,-h*0.42); ctx.lineTo(0,h*0.46); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(0,-h*0.40); ctx.quadraticCurveTo(-w*0.22,-h*0.75,-w*0.30,-h*0.72);
+  ctx.moveTo(0,-h*0.40); ctx.quadraticCurveTo(w*0.22,-h*0.75,w*0.30,-h*0.72);
+  ctx.stroke();
+  ctx.restore();
+}
+function spawnParticlesForPiece(pal){
+  if(!cur) return;
+  for(const [cx,cy] of cur.cells){
+    for(let i=0;i<3;i++){
+      particles.push({
+        x:(cur.x+cx)*CELL+CELL/2, y:(cur.y+cy+1)*CELL,
+        vx:(Math.random()-0.5)*40, vy:-(8+Math.random()*26),
+        r:1.4+Math.random()*2.4, t:0, life:480+Math.random()*260,
+        col: Math.random()<0.5 ? pal.a : '#eaffb0',
+      });
+    }
+  }
+}
+function drawParticles(dt){
+  particles = particles.filter(p=>p.t<p.life);
+  for(const p of particles){
+    p.t+=dt; p.x+=p.vx*dt/1000; p.y+=p.vy*dt/1000; p.vy+=30*dt/1000;
+    ctx.globalAlpha = clamp(1-p.t/p.life,0,1);
+    ctx.fillStyle=p.col;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.29); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+function drawPopups(dt){
+  popups = popups.filter(p=>p.t<1400);
+  ctx.save();
+  ctx.textAlign='center'; ctx.font='800 '+Math.round(CELL*0.72)+'px "Baloo 2", sans-serif';
+  for(const p of popups){
+    p.t+=dt;
+    const a=clamp(1.3-p.t/1400,0,1);
+    ctx.globalAlpha=a;
+    ctx.lineWidth=4; ctx.strokeStyle='rgba(20,40,20,0.55)';
+    const px=p.x*CELL, py=p.y*CELL - p.t*0.028;
+    ctx.strokeText(p.text, px, py);
+    ctx.fillStyle=p.col; ctx.fillText(p.text, px, py);
+  }
+  ctx.restore();
+  ctx.globalAlpha=1;
+}
+function render(dt){
+  drawBackground();
+  const clearingRows = clearAnim ? new Set(clearAnim.rows) : new Set();
+  const clearP = clearAnim ? clearAnim.t/clearAnim.dur : 0;
+  // Celdas fijas
+  for(let y=0;y<ROWS;y++) for(let x=0;x<COLS;x++){
+    const c=grid[y][x]; if(!c) continue;
+    if(clearingRows.has(y)){
+      if(clearP<0.45){ // se envuelven en crisálida
+        if(clearP<0.2) drawSegment(x,y, c.gold?GOLD:COLORS[c.col], {});
+        else drawChrysalis(x,y, timeMs*0.01+x);
+      } else if(clearP<0.62){
+        drawChrysalis(x,y, timeMs*0.02+x*2);
+      }
+      continue;
+    }
+    if(c.chry>0){ drawChrysalis(x,y, timeMs*0.006+x+y); continue; }
+    const pal = c.gold?GOLD:COLORS[c.col];
+    drawSegment(x,y,pal,{ tail:c.tail });
+    if(c.head) drawFace(x,y,pal,0,false);
+    if(c.gold){ // destellos
+      ctx.fillStyle='rgba(255,255,255,'+(0.35+0.3*Math.sin(timeMs*0.01+x*3))+')';
+      ctx.beginPath(); ctx.arc(x*CELL+CELL*0.72, y*CELL+CELL*0.26, 2, 0, 6.29); ctx.fill();
+    }
+  }
+  // Pieza fantasma + activa
+  if(cur && state==='play'){
+    const gy=ghostY();
+    if(gy!==cur.y){
+      ctx.save(); ctx.globalAlpha=0.30;
+      for(const [cx,cy] of cur.cells){
+        if(cur.y+cy<0) continue;
+        const gx=cur.x+cx, gyy=gy+cy;
+        ctx.strokeStyle=(cur.gold?GOLD:COLORS[SHAPES[cur.type].col]).dark;
+        ctx.lineWidth=2;
+        rr(gx*CELL+3, gyy*CELL+3, CELL-6, CELL-6, 8); ctx.stroke();
+      }
+      ctx.restore();
+    }
+    const pal = cur.gold?GOLD:COLORS[SHAPES[cur.type].col];
+    const grounded = collides(cur.cells, cur.x, cur.y+1);
+    cur.cells.forEach(([cx,cy],i)=>{
+      const gx=cur.x+cx, gy2=cur.y+cy;
+      if(gy2<0) return;
+      const wig = Math.sin(timeMs*0.012 + i*1.15)*CELL*0.028;
+      ctx.save();
+      ctx.translate(0, wig);
+      const isHead = (cx===cur.head[0]&&cy===cur.head[1]);
+      const isTail = (cx===cur.tail[0]&&cy===cur.tail[1]);
+      drawSegment(gx,gy2,pal,{ tail:isTail, squash: grounded?1:0 });
+      if(isHead) drawFace(gx,gy2,pal,lastMoveDir,false);
+      ctx.restore();
+    });
+    if(cur.gold){
+      ctx.fillStyle='rgba(255,230,120,'+(0.5+0.4*Math.sin(timeMs*0.014))+')';
+      for(const [cx,cy] of cur.cells){
+        ctx.beginPath(); ctx.arc((cur.x+cx)*CELL+CELL*0.75,(cur.y+cy)*CELL+CELL*0.22,2.2,0,6.29); ctx.fill();
+      }
+    }
+  }
+  // Mariposas en vuelo
+  for(const b of butterflies) drawButterfly(b);
+  // Mariposa dorada del final
+  if(finaleAnim){
+    const p = finaleAnim.t/finaleAnim.dur;
+    const fx = W*(0.12+0.76*p);
+    const fy = H*0.42 + Math.sin(p*Math.PI*3)*CELL*1.1 - p*CELL*1.4;
+    drawButterfly({ x:fx, y:fy, pal:GOLD, gold:true, t:0, life:1e9, ph:1.3, scale:2.5 });
+  }
+  drawParticles(dt||0);
+  drawPopups(dt||0);
+}
+function drawNext(){
+  const ncv=$('nextCv'), nctx=ncv.getContext('2d');
+  const s=SHAPES[nextType];
+  nctx.clearRect(0,0,72,72);
+  const cell=15, w=s.n*cell, h=2*cell;
+  const ox=(72-w)/2, oy=(72-h)/2;
+  const pal=COLORS[s.col];
+  const saveCell=CELL; CELL=cell;
+  const saveCtx=ctx;
+  // dibujar usando el mismo pincel sobre el contexto de preview
+  const cellsPx = s.cells.map(([cx,cy])=>({ x:ox+cx*cell, y:oy+cy*cell }));
+  for(const {x,y} of cellsPx){
+    const g=nctx.createLinearGradient(x,y,x,y+cell);
+    g.addColorStop(0,pal.a); g.addColorStop(1,pal.b);
+    nctx.fillStyle=g;
+    nctx.beginPath(); nctx.roundRect(x+1,y+1,cell-2,cell-2,5); nctx.fill();
+    nctx.fillStyle='rgba(255,255,255,0.4)';
+    nctx.beginPath(); nctx.roundRect(x+3,y+2.5,cell*0.45,cell*0.2,3); nctx.fill();
+  }
+  CELL=saveCell;
+}
+function updateHUD(){
+  $('hudScore').textContent = score.toLocaleString('es');
+  $('hudFly').textContent = '🦋 ' + flies;
+  $('hudLevelName').textContent = levelName(level);
+}
+function updateMeter(){ $('meterFill').style.width = Math.round(meter*100)+'%'; }
+function showBanner(id){
+  const b=$(id);
+  b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
+}
+function showLevelBanner(){
+  const b=$('levelBanner');
+  b.innerHTML = '<small>Nivel '+level+'</small>' + levelName(level);
+  showBanner('levelBanner');
+}
+
+/* ---------------- Bucle principal ---------------- */
+let lastTs = 0, ambientT = 0;
+function update(dt){
+  timeMs += dt;
+  if(finaleAnim){ finaleAnim.t += dt; if(finaleAnim.t>=finaleAnim.dur) finaleAnim=null; }
+  for(const b of butterflies){
+    b.t += dt;
+    b.x += (b.vx + Math.sin(timeMs*0.004 + b.ph)*26) * dt/1000;
+    b.y += b.vy * dt/1000;
+    b.vy -= 6*dt/1000;
+  }
+  butterflies = butterflies.filter(b=>b.t<b.life && b.y>-50);
+  if(state==='menu'){
+    ambientT += dt;
+    if(ambientT>2600){ ambientT=0; const bb=makeButterfly(rand(COLS), ROWS-1, COLORS[rand(7)], Math.random()<0.2); bb.y=H-10; butterflies.push(bb); }
+  }
+  if(state==='clearing' && clearAnim){
+    clearAnim.t += dt;
+    if(clearAnim.t>=clearAnim.dur) finishClear();
+    return;
+  }
+  if(state!=='play' || !cur) return;
+  // DAS teclado
+  if(das.dir!==0){
+    das.t += dt;
+    if(das.t>150){
+      das.acc += dt;
+      while(das.acc>42){ das.acc-=42; if(!tryMove(das.dir)) break; }
+    }
+  }
+  const grounded = collides(cur.cells, cur.x, cur.y+1);
+  if(grounded){
+    lockTimer += dt;
+    if(lockTimer>=450){ lockPiece(); updateHUD(); return; }
+  } else {
+    lockTimer = 0;
+    const interval = softDrop ? 32 : speedFor(level);
+    dropAcc += dt;
+    while(dropAcc>=interval){
+      dropAcc -= interval;
+      if(!collides(cur.cells, cur.x, cur.y+1)){ cur.y++; if(softDrop){ score+=1; } }
+      else break;
+    }
+  }
+}
+function frame(ts){
+  const dt = Math.min(ts - (lastTs||ts), 50);
+  lastTs = ts;
+  update(dt);
+  render(dt);
+  requestAnimationFrame(frame);
+}
+
+/* ---------------- Entrada: teclado ---------------- */
+const das = { dir:0, t:0, acc:0 };
+document.addEventListener('keydown', e=>{
+  if(state==='menu' && (e.key===' '||e.key==='Enter')){ startGame(); return; }
+  if(state==='over' && (e.key===' '||e.key==='Enter')){ startGame(); return; }
+  if(state==='pause' && e.key==='Escape'){ resumeGame(); return; }
+  if(e.key==='Escape' && (state==='play'||state==='clearing')){ pauseGame(); return; }
+  if(state!=='play') return;
+  switch(e.key){
+    case 'ArrowLeft': if(das.dir!==-1){ das.dir=-1; das.t=0; das.acc=0; tryMove(-1); } e.preventDefault(); break;
+    case 'ArrowRight': if(das.dir!==1){ das.dir=1; das.t=0; das.acc=0; tryMove(1); } e.preventDefault(); break;
+    case 'ArrowDown': softDrop=true; e.preventDefault(); break;
+    case 'ArrowUp': case 'x': case 'X': tryRotate(); e.preventDefault(); break;
+    case ' ': hardDrop(); e.preventDefault(); break;
+  }
+});
+document.addEventListener('keyup', e=>{
+  if(e.key==='ArrowLeft' && das.dir===-1) das.dir=0;
+  if(e.key==='ArrowRight' && das.dir===1) das.dir=0;
+  if(e.key==='ArrowDown') softDrop=false;
+});
+
+/* ---------------- Entrada: tacto ---------------- */
+let touch = null;
+cv.addEventListener('pointerdown', e=>{
+  AudioSys.resume();
+  touch = { x0:e.clientX, y0:e.clientY, x:e.clientX, y:e.clientY, t:performance.now(), moved:0, id:e.pointerId };
+  cv.setPointerCapture(e.pointerId);
+});
+cv.addEventListener('pointermove', e=>{
+  if(!touch || state!=='play' || !cur) return;
+  const dx = e.clientX - touch.x, dy = e.clientY - touch.y0;
+  const cells = Math.trunc(dx / CELL);
+  if(cells!==0){
+    const dir = Math.sign(cells);
+    let steps = Math.abs(cells);
+    while(steps-->0){ if(!tryMove(dir)) break; }
+    touch.x += Math.sign(cells)*CELL*Math.abs(Math.trunc(dx/CELL));
+    touch.moved += Math.abs(dx);
+  }
+  softDrop = dy > CELL*1.1;
+  if(softDrop) AudioSys.sfx('soft');
+});
+function endTouch(e){
+  if(!touch) return;
+  const dt = performance.now() - touch.t;
+  const dy = e.clientY - touch.y0, dx = e.clientX - touch.x0;
+  softDrop = false;
+  if(state==='play' && cur){
+    if(dy > 64 && dt < 300 && Math.abs(dy) > Math.abs(dx)*1.4){ hardDrop(); }
+    else if(dt < 230 && Math.abs(dx) < 12 && Math.abs(dy) < 12){ tryRotate(); }
+  }
+  touch = null;
+}
+cv.addEventListener('pointerup', endTouch);
+cv.addEventListener('pointercancel', ()=>{ touch=null; softDrop=false; });
+
+/* ---------------- Botones y pantallas ---------------- */
+function startGame(){
+  AudioSys.init(); AudioSys.resume(); AudioSys.startMusic();
+  $('startScreen').classList.add('hidden');
+  $('overScreen').classList.add('hidden');
+  newGame();
+}
+function pauseGame(){
+  if(state!=='play' && state!=='clearing') return;
+  pausedFrom = state; state='pause';
+  $('pauseScreen').classList.remove('hidden');
+}
+function resumeGame(){
+  state = pausedFrom || 'play'; pausedFrom=null;
+  $('pauseScreen').classList.add('hidden');
+  AudioSys.resume();
+}
+$('btnPlay').addEventListener('click', startGame);
+$('btnAgain').addEventListener('click', startGame);
+$('btnResume').addEventListener('click', resumeGame);
+$('btnPause').addEventListener('click', ()=>{ state==='pause' ? resumeGame() : pauseGame(); });
+$('btnRotate').addEventListener('pointerdown', e=>{ e.preventDefault(); AudioSys.resume(); tryRotate(); });
+$('btnDrop').addEventListener('pointerdown', e=>{ e.preventDefault(); AudioSys.resume(); hardDrop(); });
+const muteBtn = $('btnMute');
+function paintMute(){ muteBtn.textContent = AudioSys.muted ? '🔇' : '🔊'; }
+muteBtn.addEventListener('click', ()=>{ AudioSys.init(); AudioSys.setMuted(!AudioSys.muted); paintMute(); });
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden && (state==='play'||state==='clearing')) pauseGame(); });
+document.addEventListener('gesturestart', e=>e.preventDefault());
+document.addEventListener('dblclick', e=>e.preventDefault());
+
+/* ---------------- Inicio ---------------- */
+grid = emptyGrid();
+nextType = drawFromBag();
+$('statBest').textContent = best.toLocaleString('es');
+$('statJardin').textContent = '🦋 ' + jardin;
+paintMute();
+updateHUD();
+resize();
+setTimeout(resize, 120);
+drawNext();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
