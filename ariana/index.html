@@ -157,13 +157,13 @@ const STORE_BEST = 'arianaRescueBest', STORE_MUTE = 'arianaRescueMuted';
 // Wizard's terrace (cage at its right end, Wizard at its left end).
 const LEVELS = [
   { name:'Tower 1', sky:['#2f7fe0','#79c4ff','#cfeeff'], spawn:2.7, roll:74,  kind:'barrel',
-    spans:[[26,368],[26,368],[70,324],[26,368],[40,340]], vines:[300,110,300,96,210] },
+    spans:[[26,368],[26,368],[70,324],[26,368],[40,340]], vines:[205,110,300,96,210] },
   { name:'Tower 2', sky:['#e8763a','#ffb347','#ffe3ae'], spawn:2.35, roll:88, kind:'pumpkin',
-    spans:[[26,368],[80,314],[26,368],[80,314],[26,368],[44,332]], vines:[120,300,120,310,130,240] },
+    spans:[[26,368],[80,314],[26,368],[80,314],[26,368],[44,332]], vines:[175,300,120,310,130,240] },
   { name:'Tower 3', sky:['#7a4fd0','#b07fe8','#ecd9ff'], spawn:2.05, roll:100, kind:'potion', dropper:0.25,
-    spans:[[26,368],[26,300],[94,300],[26,368],[70,300],[40,340]], vines:[320,110,320,100,220,200], mover:2 },
+    spans:[[26,368],[26,300],[94,300],[26,368],[70,300],[40,340]], vines:[215,110,320,100,220,200], mover:2 },
   { name:'Tower 4', sky:['#131a3e','#2c3a6e','#5a6fae'], spawn:1.8, roll:114, kind:'mix', dropper:0.3,
-    spans:[[26,368],[80,314],[26,368],[80,314],[26,330],[90,304],[40,340]], vines:[110,310,120,300,110,300,180], mover:3 },
+    spans:[[26,368],[80,314],[26,368],[80,314],[26,330],[90,304],[40,340]], vines:[190,310,120,300,110,300,180], mover:3 },
 ];
 const TAUNTS = [
   'Too slow, little worm! 🐛','Ariana stays with ME!','Ha! Missed!',
@@ -511,6 +511,7 @@ function bubble(x, y, text, align){
   ctx.font = '800 12.5px Nunito, sans-serif';
   const w = ctx.measureText(text).width + 18;
   let bx = align === 'right' ? x - w : x; bx = Math.max(6, Math.min(bx, W - w - 6));
+  y = Math.max(46, y); // keep bubbles below the HUD pills (Tower 4's top terrace sits high)
   ctx.fillStyle = 'rgba(255,255,255,0.94)'; rr(bx, y, w, 24, 12); ctx.fill();
   ctx.fillStyle = '#33224d'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
   ctx.fillText(text, bx + 9, y + 12.5);
