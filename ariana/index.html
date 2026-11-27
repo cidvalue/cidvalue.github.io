@@ -99,7 +99,7 @@
     <p class="howto">◀ ▶ move &nbsp;•&nbsp; ▲ ▼ climb vines<br>Big button = HOP &nbsp;•&nbsp; Golden Leaf = butterfly power 🦋</p>
     <button class="bigbtn" id="startBtn">Start Climbing!</button>
     <div class="bestline" id="startBest"></div>
-    <div class="dedication">For Sofia, my Gusano — from Dad 💚</div>
+    <div class="dedication">For Gusano and Ariana — from Dad ❤️</div>
   </div>
 
   <div class="overlay hidden" id="cardScreen">
@@ -208,9 +208,10 @@ function createGame(){
   };
 }
 function newPlayer(built){
-  return { x:36, y:GROUND_Y-PH, vx:0, vy:0, face:1, onGround:true, plat:0,
+  // spawn mid-ground, clear of the touch-button clusters in both bottom corners
+  return { x:180, y:GROUND_Y-PH, vx:0, vy:0, face:1, onGround:true, plat:0,
            climb:false, coyote:0, jbuf:0, invuln:0, mariposa:0, squash:0,
-           checkX:36, checkPlat:0, dead:false };
+           checkX:180, checkPlat:0, dead:false };
 }
 function startLevel(g, idx, keepScore){
   g.level = idx;
