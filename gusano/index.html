@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#14401f">
+<meta name="theme-color" content="#0b3d1e">
 <title>Gusano</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐛</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,7 +22,7 @@
   html,body{height:100%;overflow:hidden}
   body{
     font-family:'Nunito',system-ui,sans-serif;
-    background:#14401f;
+    background:#0b3d1e;
     color:var(--ink);
     touch-action:none;
     overscroll-behavior:none;
@@ -40,7 +40,7 @@
   }
   .hud-card .label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.75;font-weight:800}
   .hud-card .value{font-family:'Baloo 2',cursive;font-size:21px;font-weight:800;line-height:1.05}
-  #hudButterflies .value{color:#ffc4e1}
+  #hudButterflies .value{color:#ff9fd0}
   #hudLevel .value{font-size:15px;line-height:1.25}
   .icon-btn{
     width:44px;border-radius:14px;border:1px solid rgba(255,255,255,.14);
@@ -95,15 +95,15 @@
   /* ---------- Overlays ---------- */
   .overlay{
     position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    background:radial-gradient(ellipse at 50% 35%, rgba(20,64,31,.25), rgba(6,24,12,.78) 75%);
-    backdrop-filter:blur(3px);text-align:center;padding:24px;transition:opacity .4s ease;
+    background:radial-gradient(ellipse at 50% 35%, rgba(20,64,31,.08), rgba(6,24,12,.52) 75%);
+    backdrop-filter:blur(2px);text-align:center;padding:24px;transition:opacity .4s ease;
   }
   .overlay.hidden{opacity:0;pointer-events:none}
   .logo-worm{font-size:64px;animation:bob 2.6s ease-in-out infinite;filter:drop-shadow(0 10px 18px rgba(0,0,0,.4))}
   @keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-9px) rotate(3deg)}}
   h1.title{
     font-family:'Baloo 2',cursive;font-size:min(19vw,84px);font-weight:800;line-height:.95;letter-spacing:.01em;
-    background:linear-gradient(180deg,#eaffb0 15%,#8be04e 55%,#43a047 90%);
+    background:linear-gradient(180deg,#f4ffb8 10%,#a5e82e 50%,#38b000 95%);
     -webkit-background-clip:text;background-clip:text;color:transparent;
     filter:drop-shadow(0 5px 0 rgba(10,40,16,.55)) drop-shadow(0 14px 28px rgba(0,0,0,.35));
   }
@@ -115,7 +115,7 @@
   .dedication .butterfly{font-size:21px}
   .big-btn{
     margin-top:26px;font-family:'Baloo 2',cursive;font-size:24px;font-weight:800;color:#173d10;
-    background:linear-gradient(180deg,#c6f16d,#7ed321);border:none;border-radius:99px;padding:14px 52px;cursor:pointer;
+    background:linear-gradient(180deg,#cff74a,#76d113);border:none;border-radius:99px;padding:14px 52px;cursor:pointer;
     box-shadow:0 8px 0 #4c8a12, 0 18px 34px rgba(0,0,0,.4);transition:transform .08s, box-shadow .08s;
   }
   .big-btn:active{transform:translateY(5px);box-shadow:0 3px 0 #4c8a12, 0 10px 20px rgba(0,0,0,.4)}
@@ -132,64 +132,64 @@
 <body>
 <div id="app">
   <div id="hud">
-    <div class="hud-card"><div class="label">Puntos</div><div class="value" id="hudScore">0</div></div>
-    <div class="hud-card" id="hudButterflies"><div class="label">Mariposas</div><div class="value" id="hudFly">🦋 0</div></div>
-    <div class="hud-card" id="hudLevel"><div class="label">Nivel</div><div class="value" id="hudLevelName">Pequeña Gusano</div></div>
-    <button class="icon-btn" id="btnMute" aria-label="Sonido">🔊</button>
-    <button class="icon-btn" id="btnPause" aria-label="Pausa">⏸</button>
+    <div class="hud-card"><div class="label">Score</div><div class="value" id="hudScore">0</div></div>
+    <div class="hud-card" id="hudButterflies"><div class="label">Butterflies</div><div class="value" id="hudFly">🦋 0</div></div>
+    <div class="hud-card" id="hudLevel"><div class="label">Level</div><div class="value" id="hudLevelName">Little Gusano</div></div>
+    <button class="icon-btn" id="btnMute" aria-label="Sound">🔊</button>
+    <button class="icon-btn" id="btnPause" aria-label="Pause">⏸</button>
   </div>
 
   <div id="stage">
     <div id="boardWrap">
       <canvas id="game"></canvas>
       <div class="banner" id="levelBanner"></div>
-      <div class="banner" id="finaleBanner">¡MARIPOSA! 🦋</div>
+      <div class="banner" id="finaleBanner">BUTTERFLY! 🦋</div>
     </div>
     <div id="side">
-      <div class="panel"><div class="label">Sigue</div><canvas id="nextCv" width="72" height="72"></canvas></div>
-      <div class="panel"><div class="label">Crisálida</div><div id="meterLeaf">🍃</div><div id="meterTrack"><div id="meterFill"></div></div></div>
+      <div class="panel"><div class="label">Next</div><canvas id="nextCv" width="72" height="72"></canvas></div>
+      <div class="panel"><div class="label">Chrysalis</div><div id="meterLeaf">🍃</div><div id="meterTrack"><div id="meterFill"></div></div></div>
     </div>
-    <button class="touch-btn" id="btnDrop" aria-label="Soltar">⬇</button>
-    <button class="touch-btn" id="btnRotate" aria-label="Girar">⟳</button>
+    <button class="touch-btn" id="btnDrop" aria-label="Drop">⬇</button>
+    <button class="touch-btn" id="btnRotate" aria-label="Spin">⟳</button>
   </div>
 </div>
 
 <div class="overlay" id="startScreen">
   <div class="logo-worm">🐛</div>
   <h1 class="title">GUSANO</h1>
-  <div class="tagline">De gusano… ¡a mariposa! 🦋</div>
-  <div class="dedication">Para Sofia, mi Gusano —<br>que ya es <span class="butterfly">🦋</span> Mariposa.<br>— Papá</div>
-  <button class="big-btn" id="btnPlay">¡A jugar!</button>
+  <div class="tagline">From a little worm… to a butterfly! 🦋</div>
+  <div class="dedication">For Sofia, my Gusano —<br>already a <span class="butterfly">🦋</span> Butterfly.<br>— Dad</div>
+  <button class="big-btn" id="btnPlay">Let's Play!</button>
   <div class="stat-row">
-    <div class="stat-chip"><div class="n" id="statBest">0</div><div class="t">Récord</div></div>
-    <div class="stat-chip"><div class="n" id="statJardin">🦋 0</div><div class="t">Jardín de Sofia</div></div>
+    <div class="stat-chip"><div class="n" id="statBest">0</div><div class="t">Best</div></div>
+    <div class="stat-chip"><div class="n" id="statJardin">🦋 0</div><div class="t">Sofia's Garden</div></div>
   </div>
-  <div class="howto">Desliza para mover al gusano · Toca para girarlo<br>Desliza hacia abajo para soltarlo<br>Completa filas y libera mariposas 🦋</div>
+  <div class="howto">Drag to move the worm · Tap to spin it<br>Swipe down to drop it<br>Complete rows and set butterflies free 🦋</div>
 </div>
 
 <div class="overlay hidden" id="overScreen">
   <div class="logo-worm">🦋</div>
-  <div id="overTitle">El jardín descansa</div>
+  <div id="overTitle">The garden rests</div>
   <div class="stat-row">
-    <div class="stat-chip"><div class="n" id="overScore">0</div><div class="t">Puntos</div></div>
-    <div class="stat-chip"><div class="n" id="overFly">0</div><div class="t">Mariposas</div></div>
-    <div class="stat-chip"><div class="n" id="overLines">0</div><div class="t">Filas</div></div>
+    <div class="stat-chip"><div class="n" id="overScore">0</div><div class="t">Score</div></div>
+    <div class="stat-chip"><div class="n" id="overFly">0</div><div class="t">Butterflies</div></div>
+    <div class="stat-chip"><div class="n" id="overLines">0</div><div class="t">Rows</div></div>
   </div>
-  <button class="big-btn" id="btnAgain">Otra vez</button>
+  <button class="big-btn" id="btnAgain">Play Again</button>
   <div class="howto" id="overJardin"></div>
 </div>
 
 <div class="overlay hidden" id="pauseScreen">
   <div class="logo-worm">🍃</div>
-  <div id="overTitle">Pausa</div>
-  <div class="dedication">El gusano está descansando…</div>
-  <button class="big-btn" id="btnResume">Seguir</button>
+  <div id="overTitle">Paused</div>
+  <div class="dedication">The little worm is resting…</div>
+  <button class="big-btn" id="btnResume">Keep Playing</button>
 </div>
 
 <script>
 'use strict';
 /* ============================================================
-   GUSANO — de gusano a mariposa
+   GUSANO — from a little worm to a butterfly
    ============================================================ */
 const COLS = 10, ROWS = 20;
 const $ = id => document.getElementById(id);
@@ -289,21 +289,21 @@ const SHAPES = [
   { n:3, cells:[[0,0],[1,0],[1,1],[2,1]], head:[0,0], tail:[2,1], col:6 }, // Z
 ];
 const COLORS = [
-  { a:'#7dd8f8', b:'#29a9e0', dark:'#15719e' },  // cielo
-  { a:'#a5b8f3', b:'#6d83e0', dark:'#45549c' },  // lavanda
-  { a:'#ffc46b', b:'#f59d2e', dark:'#b06f14' },  // naranja
-  { a:'#ffe97a', b:'#f2cf2e', dark:'#a8890f' },  // sol
-  { a:'#9fe870', b:'#58b531', dark:'#35751a' },  // hoja
-  { a:'#e3a6f0', b:'#b45fd0', dark:'#7d3499' },  // flor
-  { a:'#ff9d9d', b:'#ef6461', dark:'#b03a38' },  // pétalo
+  { a:'#4fc3f7', b:'#039be5', dark:'#01579b' },  // sky
+  { a:'#b39dfb', b:'#7c4dff', dark:'#4527a0' },  // lavender
+  { a:'#ffb75e', b:'#f68b1e', dark:'#a85a08' },  // orange
+  { a:'#ffe95e', b:'#f5c518', dark:'#a87f06' },  // sun
+  { a:'#8be04e', b:'#43a912', dark:'#256b06' },  // leaf
+  { a:'#f78ae0', b:'#d6339e', dark:'#8f1d68' },  // flower
+  { a:'#ff9d9d', b:'#ef4756', dark:'#a01c2a' },  // petal
 ];
 const GOLD = { a:'#ffe97a', b:'#ffb300', dark:'#b97e00' };
-const LEVEL_NAMES = ['Pequeña Gusano','Gusano Crece','Gusano Explora','Gusano Sueña','La Crisálida','Primeras Alas','¡Mariposa!','Mariposa Libre'];
+const LEVEL_NAMES = ['Little Gusano','Gusano Grows','Gusano Explores','Gusano Dreams','The Chrysalis','First Wings','Butterfly!','Free Butterfly'];
 const SPEEDS = [800,720,640,560,480,420,360,300,250,210,180,150,125,105,90,75,62,52,44,37];
 const SKIES = [
-  ['#8ec9eb','#cfeeff','#fdf6d8'], ['#86c5ec','#c8ecff','#fdf3d0'], ['#7fbdf0','#c2e6ff','#fdeec4'],
-  ['#79b2ec','#bcdfff','#fde7bd'], ['#8fa8e8','#cdd6ff','#fbe3b3'], ['#c99bd8','#f3ccf0','#fbd9a8'],
-  ['#e89a7a','#ffc98f','#ffe3ae'], ['#e8877a','#ffb98f','#ffe0a3'],
+  ['#1e90e8','#5ec2ff','#c8f4ff'], ['#2f7fe0','#6fc4ff','#d6f9ff'], ['#3a9ad9','#7ed0ff','#e3fbff'],
+  ['#5b6ee8','#9a7ff0','#ffd9f2'], ['#1faa59','#7ed957','#eaffb0'], ['#8e44ec','#c86bfa','#ffc7ec'],
+  ['#ff9a3d','#ffc46b','#fff3b0'], ['#ff5e7a','#ff9d7a','#ffe3ae'],
 ];
 const speedFor = lv => SPEEDS[Math.min(lv-1, SPEEDS.length-1)];
 const levelName = lv => LEVEL_NAMES[Math.min(lv-1, LEVEL_NAMES.length-1)];
@@ -462,7 +462,7 @@ function finishClear(){
   if(n>0 && !hatched){
     combo++;
     score += [0,100,300,500,800][Math.min(n,4)] * level + (combo>0 ? 50*combo*level : 0);
-    if(combo>0) popups.push({ x: COLS/2, y: 3, text:'¡Combo ×'+(combo+1)+'!', col:'#ffc4e1', t:0 });
+    if(combo>0) popups.push({ x: COLS/2, y: 3, text:'Combo ×'+(combo+1)+'!', col:'#ffc4e1', t:0 });
     lines += n;
     meter = Math.min(1, meter + n*0.25);
     const newLevel = Math.floor(lines/10)+1;
@@ -472,7 +472,7 @@ function finishClear(){
       AudioSys.sfx('level');
     }
   } else if(hatched){
-    popups.push({ x: COLS/2, y: 5, text:'¡Nació una mariposa!', col:'#b6ff9e', t:0 });
+    popups.push({ x: COLS/2, y: 5, text:'A butterfly is born!', col:'#b6ff9e', t:0 });
   }
   const rowSet = new Set(rows);
   const kept = grid.filter((_,y)=>!rowSet.has(y));
@@ -490,7 +490,7 @@ function gameOver(){
   $('overScore').textContent = score;
   $('overFly').textContent = flies;
   $('overLines').textContent = lines;
-  $('overJardin').textContent = 'El Jardín de Sofia ya tiene 🦋 ' + jardin + ' mariposas';
+  $('overJardin').textContent = "Sofia's Garden now has 🦋 " + jardin + ' butterflies';
   $('overScreen').classList.remove('hidden');
 }
 function newGame(){
@@ -547,22 +547,29 @@ function drawBackground(){
   const g = ctx.createLinearGradient(0,0,0,H);
   g.addColorStop(0, sky[0]); g.addColorStop(0.55, sky[1]); g.addColorStop(0.8, sky[2]); g.addColorStop(1, '#7a5a34');
   ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
-  // Sol / luna suave
+  // Sol brillante
   const sx=W*0.82, sy=H*0.10;
-  const sg = ctx.createRadialGradient(sx,sy,2,sx,sy,CELL*2.6);
-  sg.addColorStop(0,'rgba(255,244,190,0.95)'); sg.addColorStop(0.25,'rgba(255,238,170,0.55)'); sg.addColorStop(1,'rgba(255,238,170,0)');
-  ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(sx,sy,CELL*2.6,0,6.29); ctx.fill();
-  // Colinas de hojas (parallax suave)
-  ctx.fillStyle='rgba(46,110,52,0.35)';
+  const sg = ctx.createRadialGradient(sx,sy,2,sx,sy,CELL*2.8);
+  sg.addColorStop(0,'rgba(255,246,190,1)'); sg.addColorStop(0.18,'rgba(255,213,74,0.9)'); sg.addColorStop(0.45,'rgba(255,200,60,0.35)'); sg.addColorStop(1,'rgba(255,200,60,0)');
+  ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(sx,sy,CELL*2.8,0,6.29); ctx.fill();
+  // Colinas en dos capas, verdes vivos
+  ctx.fillStyle='rgba(46,158,79,0.85)';
   hills.forEach((hl,i)=>{
     const hx=((hl.x + Math.sin(timeMs*0.00004*hl.s + hl.ph)*0.01)%1.2-0.1)*W;
-    const hy=H*0.86 + (i%3)*CELL*0.5, r=CELL*(2.2+hl.s);
+    const hy=H*0.84 + (i%3)*CELL*0.5, r=CELL*(2.2+hl.s);
     ctx.beginPath(); ctx.arc(hx,hy+r*0.72,r,Math.PI,0); ctx.fill();
   });
-  // Tierra
+  ctx.fillStyle='#1f7a38';
+  hills.forEach((hl,i)=>{
+    const hx=((hl.x + 0.35 + Math.sin(timeMs*0.00003*hl.s + hl.ph)*0.01)%1.2-0.1)*W;
+    const hy=H*0.90 + (i%2)*CELL*0.4, r=CELL*(1.8+hl.s*0.8);
+    ctx.beginPath(); ctx.arc(hx,hy+r*0.72,r,Math.PI,0); ctx.fill();
+  });
+  // Tierra rica con borde de pasto
   const eg=ctx.createLinearGradient(0,H*0.93,0,H);
-  eg.addColorStop(0,'#8a6238'); eg.addColorStop(1,'#5e3f22');
+  eg.addColorStop(0,'#9c6b30'); eg.addColorStop(1,'#6b4423');
   ctx.fillStyle=eg; ctx.fillRect(0,H*0.93,W,H*0.07);
+  ctx.fillStyle='#37b24d'; ctx.fillRect(0,H*0.922,W,H*0.012);
   ctx.fillStyle='rgba(0,0,0,0.12)';
   for(let i=0;i<14;i++){ const dx=(i*67)%W, dy=H*0.945+(i*29)%(H*0.045); ctx.beginPath(); ctx.arc(dx,dy,2.2,0,6.29); ctx.fill(); }
   // Polen flotante
@@ -595,7 +602,7 @@ function drawSegment(cx, cy, pal, opts){
   // Sombra inferior y brillo
   ctx.fillStyle='rgba(0,0,0,0.13)';
   rr(x+w*0.08, y+h*0.68, w*0.84, h*0.26, h*0.13); ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,0.38)';
+  ctx.fillStyle='rgba(255,255,255,0.45)';
   rr(x+w*0.14, y+h*0.10, w*0.5, h*0.20, h*0.10); ctx.fill();
   if(opts.tail){
     ctx.fillStyle=pal.dark;
@@ -652,7 +659,7 @@ function drawChrysalis(cx, cy, pulse){
   const sc=1+Math.sin(pulse)*0.05;
   ctx.scale(sc,sc);
   const g=ctx.createLinearGradient(0,-s/2,0,s/2);
-  g.addColorStop(0,'#cfe8a8'); g.addColorStop(0.6,'#9ccb6b'); g.addColorStop(1,'#77a94e');
+  g.addColorStop(0,'#b7e07a'); g.addColorStop(0.6,'#8fd14f'); g.addColorStop(1,'#5da32e');
   ctx.fillStyle=g;
   ctx.beginPath(); ctx.ellipse(0,0,s*0.30,s*0.40,0,0,6.29); ctx.fill();
   ctx.strokeStyle='rgba(90,130,60,0.65)'; ctx.lineWidth=1.6;
@@ -841,7 +848,7 @@ function showBanner(id){
 }
 function showLevelBanner(){
   const b=$('levelBanner');
-  b.innerHTML = '<small>Nivel '+level+'</small>' + levelName(level);
+  b.innerHTML = '<small>Level '+level+'</small>' + levelName(level);
   showBanner('levelBanner');
 }
 
