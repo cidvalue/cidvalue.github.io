@@ -203,7 +203,7 @@ function createGame(){
     level:0, score:0, time:0, hearts:3,
     built:null,              // buildLevel(level)
     player:null, barrels:[], parts:[], leaf:null,
-    spawnT:1.2, tauntT:0, taunt:'', helpT:3, help:'',
+    spawnT:1.2, tauntT:0, taunt:'', tauntUntil:0, helpT:3, help:'',
     shake:0, flash:0, winT:0, rng:Math.random,
   };
 }
@@ -252,7 +252,7 @@ function step(g, inp, dt){
   }
 
   // wizard taunts / Ariana calls
-  g.tauntT -= dt; if (g.tauntT <= 0){ g.taunt = TAUNTS[(g.rng()*TAUNTS.length)|0]; g.tauntT = 3.6 + g.rng()*1.6; }
+  g.tauntT -= dt; if (g.tauntT <= 0){ g.taunt = TAUNTS[(g.rng()*TAUNTS.length)|0]; g.tauntT = 3.6 + g.rng()*1.6; g.tauntUntil = g.time + 2.6; }
   g.helpT  -= dt; if (g.helpT  <= 0){ g.help  = HELPS[(g.rng()*HELPS.length)|0];  g.helpT  = 4.4 + g.rng()*2.2; }
 
   // ---- player ----
@@ -663,7 +663,8 @@ function drawCageAndAriana(L, t){
     ctx.fillStyle = '#8a6d00'; ctx.beginPath(); ctx.arc(c.x + c.w/2, c.y - 22.5, 2.4, 0, 7); ctx.fill();
     ctx.restore();
   }
-  if (g.mode === 'playing' && g.help) bubble(c.x + c.w + 6, c.y - c.h - 34, g.help, 'right');
+  // Ariana's bubble yields while the Wizard's taunt is on screen — they never overlap
+  if (g.mode === 'playing' && g.help && !(g.taunt && g.time < g.tauntUntil)) bubble(c.x + c.w + 6, c.y - c.h - 34, g.help, 'right');
 }
 function drawWizard(L, t){
   const wz = L.wizard, x = wz.x + 10, feetY = wz.y;
@@ -689,7 +690,7 @@ function drawWizard(L, t){
   ctx.fillStyle = '#47237f'; ctx.beginPath(); ctx.moveTo(-11, -55); ctx.lineTo(11, -55); ctx.lineTo(2, -78); ctx.lineTo(-4, -56); ctx.closePath(); ctx.fill();
   ctx.fillStyle = '#ffd94a'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('★', 0, -60);
   ctx.restore();
-  if (g.mode === 'playing' && g.taunt) bubble(x + 22, feetY - 108, g.taunt, 'left');
+  if (g.mode === 'playing' && g.taunt && g.time < g.tauntUntil) bubble(x + 22, feetY - 108, g.taunt, 'left');
 }
 function drawWorm(p, t){
   const cx = p.x + PW/2, feetY = p.y + PH;
